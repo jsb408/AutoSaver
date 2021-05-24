@@ -31,12 +31,7 @@ public class AccidentDetectedActivity extends AppCompatActivity {
         tvTimer = findViewById(R.id.tv_timer_accident);
         btnCancel = findViewById(R.id.btn_cancel);
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(AccidentDetectedActivity.this, AccidentFirstCancelledActivity.class));
-            }
-        });
+
 
         Intent intent = getIntent();
         currentTime = intent.getStringExtra("currentTime");
@@ -47,13 +42,16 @@ public class AccidentDetectedActivity extends AppCompatActivity {
         Log.e("latitude", String.valueOf(latitude));
         Log.e("longitude", String.valueOf(longitude));
 
-        startTimer(3000);
-
-    }
-
-    public void startTimer(long timerSeconds) {
-        Timer timer = new Timer(timerSeconds, 1000);
+        Timer timer = new Timer(3000, 1000);
         timer.start();
+
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                timer.cancel();
+                startActivity(new Intent(AccidentDetectedActivity.this, AccidentFirstCancelledActivity.class));
+            }
+        });
     }
 
     class Timer extends CountDownTimer {

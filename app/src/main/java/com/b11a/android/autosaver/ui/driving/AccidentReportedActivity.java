@@ -41,7 +41,6 @@ import okhttp3.Response;
 
 import static com.b11a.android.autosaver.ConstantsKt.kPrefs;
 import static com.b11a.android.autosaver.ConstantsKt.kServerURL;
-import static java.lang.Math.sqrt;
 
 public class AccidentReportedActivity extends AppCompatActivity implements SensorEventListener {
 
