@@ -38,7 +38,6 @@ class JoinContactActivity : AppCompatActivity() {
 
         viewModel.success.observe(this) {
             if (it) {
-                kPrefs(this).edit().putString("blood", viewModel.detail.value!!.blood).apply()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }

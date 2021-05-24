@@ -24,7 +24,23 @@ import androidx.core.content.ContextCompat;
 
 import com.b11a.android.autosaver.MainActivity;
 import com.b11a.android.autosaver.R;
+import com.google.gson.JsonObject;
 
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import static com.b11a.android.autosaver.ConstantsKt.kPrefs;
+import static com.b11a.android.autosaver.ConstantsKt.kServerURL;
 import static java.lang.Math.sqrt;
 
 public class AccidentReportedActivity extends AppCompatActivity implements SensorEventListener {
@@ -37,6 +53,10 @@ public class AccidentReportedActivity extends AppCompatActivity implements Senso
     Sensor sensorAccelerometer;
 
     SmsManager smsManager = SmsManager.getDefault();
+    private String userToken;
+
+    private String userURL = kServerURL("users/userinfos");
+    private OkHttpClient client = new OkHttpClient();
 
     private static double firstLongitude, firstLatitude, nowLongitude, nowLatitude;
     private boolean isReported;
@@ -45,6 +65,8 @@ public class AccidentReportedActivity extends AppCompatActivity implements Senso
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_accident_reported);
+
+        userToken = kPrefs(context).getString("userToken", "");
 
         Intent intent = getIntent();
         currentTime = intent.getStringExtra("currentTime");
@@ -158,16 +180,42 @@ public class AccidentReportedActivity extends AppCompatActivity implements Senso
         @Override
         public void onFinish() {
             // 문자 및 전화
-            String telNo = "+8210-8606-7225";
 
-            String msg = "사고가 발생했습니다." + "- 일시 : " + currentTime + "- 위치 : 위도 " + latitude + " 경도 " + longitude + "혈액형 : ";
-            sendSMS(telNo, msg);
+            Request request = new Request.Builder()
+                    .url(userURL)
+                    .header("Authorization", userToken)
+                    .build();
 
-            Intent call = new Intent(Intent.ACTION_CALL, Uri.parse("tel:/" + telNo));
-            startActivity(call);
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
-            Toast toast = Toast.makeText(getApplicationContext(), "문자 전송 완료", Toast.LENGTH_SHORT);
-            toast.show();
+                }
+
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    JSONObject jsonObject;
+                    String responseString = Objects.requireNonNull(response.body()).string();
+
+                    try {
+                        jsonObject = new JSONObject(responseString);
+
+                        if(jsonObject.has("emergency")) {
+                            String telNo = jsonObject.getString("emergency").split("/")[1];
+                            String msg = "사고가 발생했습니다." + "- 일시 : " + currentTime + "- 위치 : 위도 " + latitude + " 경도 " + longitude + "혈액형 : " + jsonObject.getString("blood");
+                            sendSMS("119", msg);
+                            sendSMS(telNo, msg);
+
+                            Toast.makeText(getApplicationContext(), "문자 전송 완료", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    Intent callPhone = new Intent(Intent.ACTION_CALL, Uri.parse("tel:/119"));
+                    startActivity(callPhone);
+                }
+            });
 
             // 119 전화
 //            String telNo = "010-0000-0000";
