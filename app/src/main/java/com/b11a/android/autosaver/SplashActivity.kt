@@ -14,24 +14,26 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            checkPermission(ACCESS_FINE_LOCATION, SEND_SMS, CALL_PHONE)
-            startActivity(
-                Intent(this,
-                if(kPrefs(this).getBoolean("autoLogin", false)
-                    && kPrefs(this).getString("userToken", "")?.isNotEmpty() == true) {
-                    MainActivity::class.java
-                } else {
-                    LoginActivity::class.java
-                })
-            )
-            finish()
-        }, 1500)
+        checkPermission(ACCESS_FINE_LOCATION, SEND_SMS, CALL_PHONE)
     }
 
     private fun checkPermission(vararg permissions: String) {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (it.containsValue(false)) finish()
+            else {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    startActivity(
+                        Intent(this,
+                            if(kPrefs(this).getBoolean("autoLogin", false)
+                                && kPrefs(this).getString("userToken", "")?.isNotEmpty() == true) {
+                                MainActivity::class.java
+                            } else {
+                                LoginActivity::class.java
+                            })
+                    )
+                    finish()
+                }, 1500)
+            }
         }.launch(permissions)
     }
 }
